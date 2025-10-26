@@ -351,11 +351,10 @@ def eval(model, data, desc="Evaluation Progress"):
 
 # Train functions
 def train_model(model, epochs, optimizer, train_loader, val_loader, criterion):
-    # Wrap the epoch loop with tqdm for a progress bar
+    
     for epoch in tqdm(range(epochs), desc="Training Progress", leave=True, position=0, dynamic_ncols=True):
         model.train()  # Set model to training mode at the beginning of each epoch
         running_loss = 0.0
-        # Wrap the train_loader with tqdm for a progress bar for batches at position 1
         for data, target in tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs} - Batch Progress", leave=False, position=1, dynamic_ncols=True, file=sys.stdout):
             data, target = data.to(DEVICE), target.to(DEVICE)
             optimizer.zero_grad()
@@ -371,9 +370,7 @@ def train_model(model, epochs, optimizer, train_loader, val_loader, criterion):
         correct = 0
         total = 0
 
-        # Wrap the val_loader with tqdm for a progress bar for validation batches
         with torch.no_grad():
-            # Validation progress bar at position 1 so it displays beneath the epoch bar
             for data, target in tqdm(val_loader, desc=f"Epoch {epoch+1}/{epochs} - Validation Progress", leave=False, position=1, dynamic_ncols=True, file=sys.stdout):
                 data, target = data.to(DEVICE), target.to(DEVICE)
                 outputs = model(data)
@@ -426,12 +423,13 @@ sweep_config = {
     'count': 25 # Increased count to allow for more random sampling
 }
 
+# Manual configuration for testing sanity of the sweep setup before running the full sweep
 manual_config = {
-    'activation_functions': 'SiLU',
-    'batch_size': 64,
-    'optimizers': 'Nesterov-SGD',
+    'activation_functions': 'LeakyReLU',
+    'batch_size': 256,
+    'optimizers': 'Adam',
     'learning_rate': 0.005,
-    'epochs': 150
+    'epochs': 5
 }
 
 def train_and_evaluate_model_for_config():
@@ -472,13 +470,14 @@ def train_and_evaluate_model_for_config():
         raise ValueError(f"Unsupported optimizer: {config.optimizers}")
 
     # Train the model
-    train_model(model, config.epochs, optimizer, train_loader, val_loader, criterion) # Pass val_loader to train_model for evaluation
+    train_model(model, config.epochs, optimizer, train_loader, val_loader, criterion)
 
     # Optional: Log final test accuracy (using the separate test_loader now)
     final_test_acc = eval(model, test_loader, f"Final Test Accuracy Evaluation")
     wandb.log({"final_test_acc": final_test_acc})
 
     # Save the entire model locally
+    # Entire model is saved instead of state_dict so that custom layers and activation functions are preserved
     model_path = f"./models/{wandb.run.name}_model.pth"
     torch.save(model, model_path)
     tqdm.write(f"Model saved locally at: {model_path}")
