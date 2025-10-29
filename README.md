@@ -36,7 +36,7 @@ pip install -r requirements.txt
 ## WandB API key
 Place your WandB API key in the file `Wandb_API_Key.txt` located at the repository root (same folder as `vgg6_sweep.py`). The scripts will automatically try to read this file and call `wandb.login(key=...)`. Example file contents (single line):
 
-<2aee863945a04807a4a6e22058270bbdacbb02d0>
+2aee863945a04807a4a6e22058270bbdacbb02d0
 
 If the file isn't present, the script will fall back to interactive `wandb.login()`.
 
